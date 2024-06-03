@@ -336,7 +336,7 @@ def curse(stdscr):
 				stdscr.addstr(height-1, 0, "↓")
 
 			if not is_port and not is_desc:
-				stdscr.addstr(y, x, "├")
+				stdscr.addstr(y, x, "-")
 				stdscr.addstr(y, x+2, row.split(",")[0], curses.color_pair(COLOR_RED) | curses.A_BOLD)
 				if len(row.split(",")[1]) > 0:
 					stdscr.addstr(y, x+2+len(row.split(",")[0])+1, "-")
