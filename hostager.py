@@ -3,6 +3,19 @@
 
 import argparse, curses, sys, sqlite3
 
+
+def sanitize(_input):
+	if type(_input) in [int]:
+		return _input
+	else:
+		return _input.replace("'", "<single_quote>")
+
+def desanitize(_input):
+	if type(_input) in [int]:
+		return _input
+	else:
+		return _input.replace("<single_quote>", "'")
+
 class Host:
 	_id = 0
 	ip = ""
@@ -11,9 +24,9 @@ class Host:
 	descriptions = []
 	def __init__(self, row=""):
 		if row !="":
-			self._id = row[0]
-			self.ip = row[1]
-			self.name = row[2]
+			self._id = desanitize(row[0])
+			self.ip = desanitize(row[1])
+			self.name = desanitize(row[2])
 
 class Port:
 	_id = 0
@@ -24,11 +37,11 @@ class Port:
 	descriptions = []
 	def __init__(self, row=""):
 		if row !="":
-			self._id = row[0]
-			self._host_id = row[1]
-			self.port_number = row[2]
-			self.protocol = row[3]
-			self.service = row[4]
+			self._id = desanitize(row[0])
+			self._host_id = desanitize(row[1])
+			self.port_number = desanitize(row[2])
+			self.protocol = desanitize(row[3])
+			self.service = desanitize(row[4])
 class Description:
 	_id = 0
 	_port_id = 0
@@ -36,10 +49,10 @@ class Description:
 	description = ""
 	def __init__(self, row=""):
 		if row !="":	
-			self._id = row[0]
-			self._port_id = row[1]
-			self._host_id = row[2]
-			self.description = row[3]
+			self._id = desanitize(row[0])
+			self._port_id = desanitize(row[1])
+			self._host_id = desanitize(row[2])
+			self.description = desanitize(row[3])
 		
 #-------------------------------------
 
@@ -77,76 +90,77 @@ class SQLITE:
 		self.__execute_query(queries)
 
 	def delete_description_by_id(self, description_id):
-		self.__execute_query([f"DELETE FROM descriptions WHERE _id='{description_id}'"])
+
+		self.__execute_query([f"DELETE FROM descriptions WHERE _id='{sanitize(description_id)}'"])
 
 	def delete_port_by_id(self, port_id):
-		self.__execute_query([f"DELETE FROM ports WHERE _id='{port_id}'"])
-		self.__execute_query([f"DELETE FROM descriptions WHERE port_id='{port_id}'"])
+		self.__execute_query([f"DELETE FROM ports WHERE _id='{sanitize(port_id)}'"])
+		self.__execute_query([f"DELETE FROM descriptions WHERE port_id='{sanitize(port_id)}'"])
 
 	def delete_host_by_id(self, host_id):
-		self.__execute_query([f"DELETE FROM hosts WHERE _id='{host_id}'"])
-		self.__execute_query([f"DELETE FROM ports WHERE host_id='{host_id}'"])
-		self.__execute_query([f"DELETE FROM descriptions WHERE host_id='{host_id}'"])
+		self.__execute_query([f"DELETE FROM hosts WHERE _id='{sanitize(host_id)}'"])
+		self.__execute_query([f"DELETE FROM ports WHERE host_id='{sanitize(host_id)}'"])
+		self.__execute_query([f"DELETE FROM descriptions WHERE host_id='{sanitize(host_id)}'"])
 
 	def delete_description(self, description):
-		self.__execute_query([f"DELETE FROM descriptions WHERE description='{description.description}' AND host_id='{description._host_id}' AND port_id='{description._port_id}'"])
+		self.__execute_query([f"DELETE FROM descriptions WHERE description='{sanitize(description.description)}' AND host_id='{sanitize(description._host_id)}' AND port_id='{sanitize(description._port_id)}'"])
 
 	def delete_port(self, port):
-		self.__execute_query([f"DELETE FROM ports WHERE port_number='{port.port_number}' AND host_id='{port._host_id}'"])
-		self.__execute_query([f"DELETE FROM descriptions WHERE host_id='{port._host_id}' AND port_id='{port._id}'"])
+		self.__execute_query([f"DELETE FROM ports WHERE port_number='{sanitize(port.port_number)}' AND host_id='{sanitize(port._host_id)}'"])
+		self.__execute_query([f"DELETE FROM descriptions WHERE host_id='{sanitize(port._host_id)}' AND port_id='{sanitize(port._id)}'"])
 
 	def delete_host(self, host):
-		self.__execute_query([f"DELETE FROM hosts WHERE ip='{host.ip}'"])
-		self.__execute_query([f"DELETE FROM ports WHERE host_id='{port._host_id}'"])
-		self.__execute_query([f"DELETE FROM descriptions WHERE host_id='{port._host_id}'"])
+		self.__execute_query([f"DELETE FROM hosts WHERE ip='{sanitize(host.ip)}'"])
+		self.__execute_query([f"DELETE FROM ports WHERE host_id='{sanitize(port._host_id)}'"])
+		self.__execute_query([f"DELETE FROM descriptions WHERE host_id='{sanitize(port._host_id)}'"])
 
 	def update_description_by_id(self, description):
-		self.__execute_query([f"UPDATE descriptions SET description='{description.description}' WHERE _id={description._id}"])
+		self.__execute_query([f"UPDATE descriptions SET description='{sanitize(description.description)}' WHERE _id={sanitize(description._id)}"])
 
 	def update_port_by_id(self, port):
-		self.__execute_query([f"UPDATE ports SET protocol='{port.protocol}', service='{port.service}', port_number='{port.port_number}' WHERE _id={port._id}"])
+		self.__execute_query([f"UPDATE ports SET protocol='{sanitize(port.protocol)}', service='{sanitize(port.service)}', port_number='{sanitize(port.port_number)}' WHERE _id={sanitize(port._id)}"])
 
 	def update_host_by_id(self, host):
-		self.__execute_query([f"UPDATE hosts SET name='{host.name}', ip='{host.ip}' WHERE _id={host._id}"])
+		self.__execute_query([f"UPDATE hosts SET name='{sanitize(host.name)}', ip='{sanitize(host.ip)}' WHERE _id={sanitize(host._id)}"])
 
 	def update_description(self, description):
-		d = self.__execute_query([f"SELECT * FROM descriptions WHERE description='{description.description}' AND host_id='{description._host_id}' AND port_id='{description._port_id}'"])
+		d = self.__execute_query([f"SELECT * FROM descriptions WHERE description='{sanitize(description.description)}' AND host_id='{sanitize(description._host_id)}' AND port_id='{sanitize(description._port_id)}'"])
 		if d == None:
 			return
 
 		if len(d) == 0:
-			self.__execute_query([f"INSERT INTO descriptions(port_id,host_id,description) VALUES ('{description._port_id}','{description._host_id}','{description.description}')"])
+			self.__execute_query([f"INSERT INTO descriptions(port_id,host_id,description) VALUES ('{sanitize(description._port_id)}','{sanitize(description._host_id)}','{sanitize(description.description)}')"])
 
-		d = self.__execute_query([f"SELECT * FROM descriptions WHERE description='{description.description}' AND host_id='{description._host_id}' AND port_id='{description._port_id}'"])[0]
+		d = self.__execute_query([f"SELECT * FROM descriptions WHERE description='{sanitize(description.description)}' AND host_id='{sanitize(description._host_id)}' AND port_id='{sanitize(description._port_id)}'"])[0]
 
 		return Description(d)
 
 	def update_port(self, port):
-		p = self.__execute_query([f"SELECT * FROM ports WHERE port_number='{port.port_number}' AND host_id='{port._host_id}'"])
+		p = self.__execute_query([f"SELECT * FROM ports WHERE port_number='{sanitize(port.port_number)}' AND host_id='{sanitize(port._host_id)}'"])
 		if p == None:
 			return
 
 		if len(p) == 0:
-			self.__execute_query([f"INSERT INTO ports(host_id,port_number,protocol,service) VALUES ('{port._host_id}','{port.port_number}','{port.protocol}','{port.service}')"])
+			self.__execute_query([f"INSERT INTO ports(host_id,port_number,protocol,service) VALUES ('{sanitize(port._host_id)}','{sanitize(port.port_number)}','{sanitize(port.protocol)}','{sanitize(port.service)}')"])
 		else:
-			self.__execute_query([f"UPDATE ports SET protocol='{port.protocol}', service='{port.service}' WHERE port_number='{port.port_number}' AND host_id='{port._host_id}'"])
+			self.__execute_query([f"UPDATE ports SET protocol='{sanitize(port.protocol)}', service='{sanitize(port.service)}' WHERE port_number='{sanitize(port.port_number)}' AND host_id='{sanitize(port._host_id)}'"])
 
-		p = self.__execute_query([f"SELECT * FROM ports WHERE port_number='{port.port_number}' AND host_id='{port._host_id}'"])[0]
+		p = self.__execute_query([f"SELECT * FROM ports WHERE port_number='{sanitize(port.port_number)}' AND host_id='{sanitize(port._host_id)}'"])[0]
 
 		return Port(p)
 
 
 	def update_host(self, host):
-		h = self.__execute_query([f"SELECT * FROM hosts WHERE ip='{host.ip}'"])
+		h = self.__execute_query([f"SELECT * FROM hosts WHERE ip='{sanitize(host.ip)}'"])
 		if h == None:
 			return
 
 		if len(h) == 0:
-			self.__execute_query([f"INSERT INTO hosts(ip,name) VALUES ('{host.ip}','{host.name}')"])
+			self.__execute_query([f"INSERT INTO hosts(ip,name) VALUES ('{sanitize(host.ip)}','{sanitize(host.name)}')"])
 		else:
-			self.__execute_query([f"UPDATE hosts SET name='{host.name}' WHERE ip='{host.ip}'"])
+			self.__execute_query([f"UPDATE hosts SET name='{sanitize(host.name)}' WHERE ip='{sanitize(host.ip)}'"])
 
-		h = self.__execute_query([f"SELECT * FROM hosts WHERE ip='{host.ip}'"])[0]
+		h = self.__execute_query([f"SELECT * FROM hosts WHERE ip='{sanitize(host.ip)}'"])[0]
 
 		return Host(h)
 
@@ -325,11 +339,13 @@ def curse(stdscr):
 
 			row = row.split("-")[1]
 			
+			#Cursor
 			if idx == current_row:
 				stdscr.attron(curses.color_pair(1))
 				stdscr.addstr(y, 2, " > ")
 				stdscr.attroff(curses.color_pair(1))
 
+			#Flechas superior e inferior
 			if x_min > 0:
 				stdscr.addstr(2, 0, "↑")
 			if len(actual_menu)+2 >= height and len(menu)>x_max:
