@@ -432,7 +432,7 @@ def curse(stdscr):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Host and findings manager based in sqlite')
-	parser.add_argument('-DB', required=True, help="Database name and location")
+	parser.add_argument('DB', help="Database name and location")
 	args = parser.parse_args()
 
 	sqlite = SQLITE(args.DB)
