@@ -8,13 +8,13 @@ def sanitize(_input):
 	if type(_input) in [int]:
 		return _input
 	else:
-		return _input.replace("'", "<single_quote>")
+		return _input.replace("'", "<single_quote>").replace("-", "<minus_symbol>")
 
 def desanitize(_input):
 	if type(_input) in [int]:
 		return _input
 	else:
-		return _input.replace("<single_quote>", "'")
+		return _input.replace("<single_quote>", "'").replace("<minus_symbol>", "-")
 
 class Host:
 	_id = 0
@@ -337,7 +337,7 @@ def curse(stdscr):
 			if int(row.split("-")[0].split(",")[2]) != 0:
 				is_desc = True
 
-			row = row.split("-")[1]
+			row = '-'.join(row.split("-")[1:])
 			
 			#Cursor
 			if idx == current_row:
